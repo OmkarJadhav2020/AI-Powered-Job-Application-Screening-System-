@@ -25,8 +25,19 @@ def load_embeddings(table_name, key_name):
         except Exception as e:
             print(f"❌ Failed parsing embedding for {key}: {e}")
     return data
+import sqlite3
 
-def match_all_jobs(threshold=0.75):
+def save_match(job_id, candidate_id, score):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO matches (job_id, candidate_id, similarity_score)
+    VALUES (?, ?, ?)
+    """, (job_id, candidate_id, score))
+    conn.commit()
+    conn.close()
+
+def match_all_jobs(threshold=0.70):
     jobs = load_embeddings("jobs", "job_id")
     candidates = load_embeddings("candidates", "candidate_id")
 
@@ -40,10 +51,12 @@ def match_all_jobs(threshold=0.75):
         # Sort by similarity
         scores.sort(key=lambda x: x[1], reverse=True)
 
-        # Show top 5 matches
-        for rank, (cid, score) in enumerate(scores[:5], start=1):
+        for rank, (cid, score) in enumerate(scores[:3], start=1):  # top 3
             match_str = "✅" if score >= threshold else "❌"
             print(f"{match_str} Rank {rank}: {cid} → Score: {score:.4f}")
+            if score >= threshold:
+                save_match(job_id, cid, score)
+
 
 if __name__ == "__main__":
     match_all_jobs(threshold=0.70)
