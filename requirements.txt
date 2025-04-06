@@ -1,0 +1,8 @@
+streamlit
+pandas
+PyPDF2
+ollama
+scikit-learn
+matplotlib
+numpy
+python-dotenv
